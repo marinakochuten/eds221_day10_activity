@@ -1,0 +1,88 @@
+---
+title: "EDS 221 Tasks"
+output: html_document
+date: "2024-08-23"
+editor_options: 
+  chunk_output_type: console
+exectue:
+  echo: FALSE
+  warning: FALSE
+---
+
+```{r}
+library(tidyverse)
+library(here)
+```
+
+```{r}
+ice_duration <- read_csv(here("data", "ntl33_v7.csv"), na = ("-999"))
+meteorological <- read_csv(here("data", "ntl20_v6.csv"))
+```
+
+```{r}
+ggplot(data = ice_duration, aes(y = ice_duration, x = lakeid)) +
+  geom_jitter() +
+  geom_boxplot(outliers = FALSE)
+```
+
+```{r}
+mean_ice_cover <- ice_duration |>
+  group_by(year4) |>
+  summarise(mean_ice = mean(ice_duration))
+```
+
+```{r}
+#| fig-cap: "Overall, the mean ice cover duration in the Madison Lake Area has been decreasing since 1852."
+ggplot(data = mean_ice_cover, aes(x = year4, y = mean_ice)) +
+  geom_line()
+```
+
+```{r}
+mean_air_temp <- meteorological |>
+  filter(month %in% c("12", "1", "2")) |>
+  group_by(year4) |>
+  summarise(mean_air_winter = mean(ave_air_temp_adjusted))
+```
+
+```{r}
+#| fig-cap: "Overall, the mean winter air temperature in the Madison Lake Area has been increasing."
+ggplot(data = mean_air_temp, aes(x = year4, y = mean_air_winter)) +
+  geom_line()
+```
+
+```{r}
+temp_duration_means <-
+  full_join(mean_air_temp, mean_ice_cover)
+```
+
+```{r}
+#| fig-cap: "overall, as the average winter air temperature increases, the average ice cover duration decreases."
+ggplot(data = temp_duration_means, aes(x = mean_air_winter, y = mean_ice)) +
+  geom_point()
+```
+
+```{r}
+ice_cover_recent <- ice_duration |>
+  filter(year4 >= 1970) |>
+  mutate(ice_off = lubridate::ymd(ice_off)) |>
+  mutate(ice_off_day = lubridate::yday(ice_off))
+
+recent_means <- ice_cover_recent |>
+  group_by(year4) |>
+  summarise(ave_day = mean(ice_off_day))
+
+ggplot(recent_means, aes(x = year4, y = ave_day)) +
+  geom_line()
+```
+
+```{r}
+#| fig-cap: "Generally, the day that the ice fully melts in the Madison Lake Area is getting sooner over time."
+ggplot(data = ice_cover_recent, aes(x = year4, y = ice_off_day)) +
+  geom_line()
+```
+
+
+
+
+
+
